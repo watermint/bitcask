@@ -4,7 +4,9 @@ package flock
 
 import (
 	"errors"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -110,8 +112,15 @@ func TestRaceLock(t *testing.T) {
 	goroutines := 20          // number of concurrent "locker" goroutines to launch
 	successfulLockCount := 50 // how many times a "locker" will successfully take the lock before halting
 
-	// make sure there is no present lock when startng this test
-	os.Remove(testLockPath)
+	testLockFile, err := ioutil.TempFile("", "raceLock")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	testLockPath := testLockFile.Name()
+	defer func() {
+		_ = os.Remove(testLockPath)
+	}()
 
 	// timeout implemented in code
 	// (the lock acquisition depends on the behavior of the filesystem,
@@ -166,8 +175,16 @@ func TestShatteredLock(t *testing.T) {
 	goroutines := 4           // number of concurrent "locker" and "remover" goroutines to launch
 	successfulLockCount := 10 // how many times a "locker" will successfully take the lock before halting
 
-	// make sure there is no present lock when startng this test
-	os.Remove(testLockPath)
+	testLockDir, err := ioutil.TempDir("", "flock")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	testLockPath := filepath.Join(testLockDir, "bitcask_unit_test_lock")
+	defer func() {
+		_ = os.RemoveAll(testLockDir)
+	}()
+
 	assert := assert.New(t)
 
 	wg := &sync.WaitGroup{}
@@ -189,7 +206,7 @@ func TestShatteredLock(t *testing.T) {
 				count--
 				err := lock.Unlock()
 				if !isExpectedError(err) {
-					assert.Fail("goroutine %d - unexpected error: %v", id, err)
+					assert.Failf("unexpected", "goroutine %s - unexpected error: %v", id, err)
 				}
 
 				if err != nil {

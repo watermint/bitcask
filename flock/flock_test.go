@@ -1,21 +1,27 @@
 package flock
 
 import (
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
-// WARNING : this test will delete the file located at "testLockPath". Choose an adequate temporary file name.
-const testLockPath = "/tmp/bitcask_unit_test_lock" // file path to use for the lock
-
 func TestTryLock(t *testing.T) {
 	// test that basic locking functionalities are consistent
 
-	// make sure there is no present lock when starting this test
-	os.Remove(testLockPath)
+	testLockDir, err := ioutil.TempDir("", "flock")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	testLockPath := filepath.Join(testLockDir, "bitcask_unit_test_lock")
+	defer func() {
+		_ = os.RemoveAll(testLockDir)
+	}()
 
 	assert := assert.New(t)
 
@@ -48,15 +54,22 @@ func TestTryLock(t *testing.T) {
 func TestLock(t *testing.T) {
 	assert := assert.New(t)
 
-	// make sure there is no present lock when starting this test
-	os.Remove(testLockPath)
+	testLockDir, err := ioutil.TempDir("", "flock")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	testLockPath := filepath.Join(testLockDir, "bitcask_unit_test_lock")
+	defer func() {
+		_ = os.RemoveAll(testLockDir)
+	}()
 
 	syncChan := make(chan bool)
 
 	// main goroutine: take lock on testPath
 	lock := New(testLockPath)
 
-	err := lock.Lock()
+	err = lock.Lock()
 	assert.NoError(err)
 
 	go func() {
@@ -96,14 +109,21 @@ func TestErrorConditions(t *testing.T) {
 	// -- setup
 	assert := assert.New(t)
 
-	// make sure there is no present lock when starting this test
-	os.Remove(testLockPath)
+	testLockFile, err := ioutil.TempFile("", "errorConditions")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	testLockPath := testLockFile.Name()
+	defer func() {
+		_ = os.Remove(testLockPath)
+	}()
 
 	lock := New(testLockPath)
 
 	// -- run tests :
 
-	err := lock.Unlock()
+	err = lock.Unlock()
 	assert.Error(err, "you can't release a lock you do not hold")
 
 	// take the lock once:

@@ -39,6 +39,10 @@ func lock_sys(path string, nonBlocking bool) (_ *os.File, err error) {
 	return fh, nil
 }
 
+func unlock_sys(fh *os.File, path string) error {
+	return rm_if_match(fh, path)
+}
+
 func rm_if_match(fh *os.File, path string) error {
 	// Sanity check :
 	// before running "rm", check that the file pointed at by the
@@ -55,7 +59,12 @@ func rm_if_match(fh *os.File, path string) error {
 		return ErrInodeChangedAtPath
 	}
 
-	return os.Remove(path)
+	err1 := os.Remove(path)
+	err2 := fh.Close()
+	if err1 != nil {
+		return err1
+	}
+	return err2
 }
 
 func sameInodes(f *os.File, path string) bool {

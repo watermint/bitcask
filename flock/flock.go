@@ -40,8 +40,6 @@ func (f *Flock) Lock() error {
 		return ErrAlreadyLocked
 	}
 
-	var fh *os.File
-
 	fh, err := lock_sys(f.path, false)
 	// treat "ErrInodeChangedAtPath" as "some other process holds the lock, retry locking"
 	for err == ErrInodeChangedAtPath {
@@ -87,11 +85,7 @@ func (f *Flock) Unlock() error {
 		return ErrLockNotHeld
 	}
 
-	err1 := rm_if_match(f.fh, f.path)
-	err2 := f.fh.Close()
-
-	if err1 != nil {
-		return err1
-	}
-	return err2
+	err1 := unlock_sys(f.fh, f.path)
+	f.fh = nil
+	return err1
 }

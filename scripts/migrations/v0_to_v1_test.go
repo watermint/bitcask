@@ -14,7 +14,7 @@ import (
 
 func Test_ApplyV0ToV1(t *testing.T) {
 	assert := assert.New(t)
-	testdir, err := ioutil.TempDir("/tmp", "bitcask")
+	testdir, err := ioutil.TempDir("", "bitcask")
 	assert.NoError(err)
 	defer os.RemoveAll(testdir)
 	w0, err := os.OpenFile(filepath.Join(testdir, "000000000.data"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0640)
