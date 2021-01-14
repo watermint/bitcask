@@ -7,12 +7,16 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func Test_ApplyV0ToV1(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping this test on Windows")
+	}
 	assert := assert.New(t)
 	testdir, err := ioutil.TempDir("", "bitcask")
 	assert.NoError(err)

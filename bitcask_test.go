@@ -9,6 +9,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -51,6 +52,12 @@ func SortByteArrays(src [][]byte) [][]byte {
 	sorted := sortByteArrays(src)
 	sort.Sort(sorted)
 	return sorted
+}
+
+func skipIfWindows(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping this test on Windows")
+	}
 }
 
 func TestAll(t *testing.T) {
@@ -321,6 +328,7 @@ func TestDeletedKeys(t *testing.T) {
 }
 
 func TestMetadata(t *testing.T) {
+	skipIfWindows(t)
 	assert := assert.New(t)
 	testdir, err := ioutil.TempDir("", "bitcask")
 	assert.NoError(err)
@@ -409,6 +417,8 @@ func TestConfigErrors(t *testing.T) {
 }
 
 func TestAutoRecovery(t *testing.T) {
+	skipIfWindows(t)
+
 	withAutoRecovery := []bool{false, true}
 
 	for _, autoRecovery := range withAutoRecovery {
@@ -781,6 +791,7 @@ func TestStatsError(t *testing.T) {
 	})
 
 	t.Run("Test", func(t *testing.T) {
+		skipIfWindows(t)
 		t.Run("FabricatedDestruction", func(t *testing.T) {
 			// This would never happen in reality :D
 			// Or would it? :)
@@ -796,6 +807,7 @@ func TestStatsError(t *testing.T) {
 }
 
 func TestDirFileModeBeforeUmask(t *testing.T) {
+	skipIfWindows(t)
 	assert := assert.New(t)
 
 	t.Run("Setup", func(t *testing.T) {
@@ -878,6 +890,7 @@ func TestDirFileModeBeforeUmask(t *testing.T) {
 }
 
 func TestFileFileModeBeforeUmask(t *testing.T) {
+	skipIfWindows(t)
 	assert := assert.New(t)
 
 	t.Run("Setup", func(t *testing.T) {
@@ -1006,6 +1019,7 @@ func TestMaxDatafileSize(t *testing.T) {
 }
 
 func TestMerge(t *testing.T) {
+	skipIfWindows(t)
 	var (
 		db  *Bitcask
 		err error
@@ -1347,6 +1361,7 @@ func TestMergeErrors(t *testing.T) {
 	assert := assert.New(t)
 
 	t.Run("RemoveDatabaseDirectory", func(t *testing.T) {
+		skipIfWindows(t)
 		testdir, err := ioutil.TempDir("", "bitcask")
 		assert.NoError(err)
 		defer os.RemoveAll(testdir)
@@ -1641,6 +1656,7 @@ func TestLocking(t *testing.T) {
 }
 
 func TestLockingAfterMerge(t *testing.T) {
+	skipIfWindows(t)
 	assert := assert.New(t)
 
 	testdir, err := ioutil.TempDir("", "bitcask")
